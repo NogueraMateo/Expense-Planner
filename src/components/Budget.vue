@@ -5,6 +5,8 @@
   const budget = ref(0)
   const error = ref('')
 
+  const emit = defineEmits(['set-budget'])
+
   const setBudget = () => {
     if (budget.value <= 0) {
       error.value = 'Invalid Budget'
@@ -12,7 +14,12 @@
       setTimeout(() => {
         error.value = ''
       }, 3000)
-    }
+
+      return
+    } 
+
+    emit('set-budget', budget.value)
+
   }
 </script>
 

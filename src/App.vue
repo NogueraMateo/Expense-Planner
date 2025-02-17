@@ -1,17 +1,121 @@
 <script setup>
+  import { ref, reactive } from 'vue';
+  import { uid } from 'uid';
   import Budget from './components/Budget.vue';
+  import Modal from './components/Modal.vue';
+  import Expense from './components/Expense.vue';
+  import BudgetControl from './components/BudgetControl.vue';
+  import newBudgetIcon from './assets/img/nuevo-gasto.svg'
+
+  const modal = reactive({
+    show: false,
+    animate: false
+  })
+  const budget = ref(0);
+  const available = ref(0);
+
+  const expense = reactive({
+    name: '',
+    amount: '',
+    category: '',
+    id: null,
+    date: Date.now()
+  })
+
+  const expenses = ref([]);
+
+  const setBudget = (quantity) => {
+    budget.value = quantity;
+    available.value = quantity;
+  }
+
+  const showModal = () => {
+    modal.show = true;
+    setTimeout(() => {
+      modal.animate = true;      
+    }, 300);
+  }
+  
+  const closeModal = () => {
+    modal.animate = false;
+    setTimeout(() => {
+      modal.show = false;
+    }, 300);
+  }
+
+  const saveExpense = () => {
+    expenses.value.push({
+      ...expense,
+      id: uid()
+    });
+
+    closeModal();
+
+    Object.assign(expense, {
+      name: '',
+      amount: '',
+      category: '',
+      id: null,
+      date: Date.now()
+    })
+  }
 </script>
 
 <template>
-  <div>
+  <div
+    :class="{fix: modal.show}"
+  >
     <header>
       <h1>Expense Planner</h1>
       
       <div class="header-container container shadow">
-        <Budget />
+        <Budget 
+          v-if="budget === 0"
+          @set-budget="setBudget"
+        />
+
+        <BudgetControl
+          v-else
+          :budget="budget"
+          :available="available"
+        />
       </div>
       
     </header>
+
+    <main v-if="budget > 0">
+      
+      <div class="container expense-list">
+        <h2>{{ expenses.length > 0 ? "Expenses" : "There aren't any expenses"}}</h2>
+
+        <Expense 
+          v-for="expense in expenses"
+          :key="expense.id"
+          :expense="expense"
+        />
+      </div>
+
+      <div 
+        class="create-budget"
+        @click="showModal"
+      >
+        <img 
+          :src="newBudgetIcon" 
+          alt="New budget icon"
+        />
+      </div>
+
+      <Modal 
+        v-if="modal.show"
+        @close-modal="closeModal"
+        @save-expense="saveExpense"
+        :modal="modal"
+        v-model:name="expense.name"
+        v-model:amount="expense.amount"
+        v-model:category="expense.category"
+      />
+
+    </main>
   </div>
 </template>
 
@@ -50,6 +154,11 @@
     font-size: 3rem;
   }
 
+  .fix {
+    overflow: hidden;
+    height: 100vh;
+  }
+
   header {
     background-color: var(--azul);
   }
@@ -78,5 +187,26 @@
     background-color: var(--blanco);
     border-radius: 1.2rem;
     padding: 5rem;
-}
+  }
+
+  .create-budget {
+    position: fixed;
+    bottom: 5rem;
+    right: 5rem;
+  }
+
+  .create-budget img {
+    width: 5rem;
+    cursor:pointer;
+  }
+
+  .expense-list {
+    margin-top: 10rem;
+  }
+
+  .expense-list h2 {
+    text-align: center;
+    font-weight: 900;
+    color: var(--gris-oscuro);
+  }
 </style>
